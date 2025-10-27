@@ -1,0 +1,40 @@
+Bootstrap: docker
+From: continuumio/miniconda3
+
+%labels
+    Maintainer Benoit Guibert <benoit.guibert@inserm.fr>
+    Version 1.0.0
+    Name kite
+
+%files
+    kite_env.yml
+    src/kite /opt/src/kite
+    src/comp_qvalue /opt/src/comp_qvalue
+    src/create_samples.R /opt/src/create_samples.R
+    src/get_conditions.R /opt/src/get_conditions.R
+    src/kSelection /opt/src/kSelection
+    src/putting_classes.R /opt/src/putting_classes.R
+    src/xai.py /opt/src/xai.py
+    src/xgb.py /opt/src/xgb.py
+    
+%post
+    ### debian packages
+    apt update
+    apt install -y bc
+    apt-get clean
+
+    
+    ### install kite environment 
+    /opt/conda/bin/conda update -y conda
+    /opt/conda/bin/conda env create -f kite_env.yml
+    # some useless conda scripts encountered errors
+    rm /opt/conda/envs/kite/etc/conda/activate.d/activate-binutils_linux-64.sh
+    rm /opt/conda/envs/kite/etc/conda/activate.d/activate-gcc_linux-64.sh
+    rm /opt/conda/envs/kite/etc/conda/activate.d/activate-gxx_linux-64.sh
+
+%runscript
+    exec kite "$@"
+
+%environment
+    export PATH=/opt/conda/bin:/opt/src:$PATH
+    source activate kite

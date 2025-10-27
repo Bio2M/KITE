@@ -1,0 +1,24 @@
+name: kite
+channels:
+  - conda-forge
+  - tlemane
+  - defaults
+dependencies:
+  # Python
+  - python
+  - pandas
+  - scikit-learn
+  - xgboost
+  - numpy
+  - shap
+
+  # R
+  - r-base
+
+  # C++ compilers
+  - gxx_linux-64
+  - zlib
+
+  # kmtricks
+  - kmtricks
+

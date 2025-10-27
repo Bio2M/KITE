@@ -1,0 +1,191 @@
+#!/usr/bin/env bash
+
+#~ source $(conda info --base)/etc/profile.d/conda.sh
+#~ conda activate kite
+
+# -------- HELP --------
+show_help() {
+  echo "DESCRIPTION"
+  echo "kite [module] [options]"
+  echo ""
+  echo "Modules:"
+  echo "  kcount     Run k-mer counting"
+  echo "  kfilter    Run k-mer filtering"
+  echo "  kml        Run k-mer ML methods"
+  echo "  pipeline   Run full pipeline (kcount + kfilter + kml)"
+  echo ""
+  echo "Options:"
+  echo "  -i    input file"
+  echo "  -t    selection threshold [0.4–0.7] (default: 0.5)"
+  echo "  -n    number of threads (default: 4)"
+  echo "  -m    matrix (default: output/output.tsv)"
+  echo "  -d    directory with fastq samples"
+  echo "  -s    separator: s=space, t=tab, c=comma (default: s)"
+  exit 0
+}
+
+# -------- Parse module --------
+module=$1
+shift   # shift removes the first argument (the module)
+
+# Defaults
+threads=4
+separator="s"
+threshold=0.5
+
+# -------- Parse options --------
+while getopts i:n:t:d:m:s: flag
+do
+    case "${flag}" in
+      i) input=${OPTARG};;
+      n) threads=${OPTARG};;
+      t) threshold=${OPTARG};;
+      d) directory=${OPTARG};;
+      m) matrix=${OPTARG};;
+      s) separator=${OPTARG};;
+    esac
+done
+
+# -------- Functions --------
+kcount() {
+  local input=$1
+  local threads=$2
+  local directory=$3
+  echo ">>> Running kCount..."
+
+  # Create output directory if it doesn't exist
+  mkdir -p output
+
+  # Run the R script to create samples
+  create_samples.R "$input" "$directory"
+  
+  # Calculate recurrence-min parameter for kmtricks
+  x=$(ls $directory | wc -l)
+  y=$((x / 2))
+  y=$(( (y * 5) / 100 ))
+  if [[ $y -lt 3 ]]; then y=3; fi
+
+  # Run kmtricks pipeline
+  kmtricks pipeline --file samples --run-dir temp --kmer-size 31 -t "$threads" \
+    --hard-min 4 --soft-min 4 --recurrence-min "$y" --focus 0 --mode kmer:count:bin --cpr --until merge
+  # Aggregate kmtricks output into a matrix
+  kmtricks aggregate --run-dir temp --matrix kmer --cpr-in --format text --sorted -t "$threads" > output/matrix.tsv
+
+  awk -F":" '{print $1}' samples > output/samples_name.tsv # Prepare the header for the matrix
+  awk '{printf "%s%s", sep, $1; sep=" "} END {print ""}' output/samples_name.tsv > output/testfile.tmp # Convert rows to a single line separated by space
+  mv output/testfile.tmp output/samples_name.tsv
+  sed -i '1s/^/tag /' output/samples_name.tsv # Add "tag" at the beginning of the header
+  sed -i -e '$a\' output/samples_name.tsv # Ensure newline at the end of the file
+  sed -i -e '1e cat output/samples_name.tsv' output/matrix.tsv # Insert header into matrix.tsv
+  rm -r temp/ samples output/samples_name.tsv
+
+  echo "kCount completed!"
+}
+
+kfilter() {
+  local input=$1
+  local matrix=$2
+  local threads=$3
+  local separator=$4
+  local threshold=$5
+
+  echo ">>> Running kFilter..."
+
+  if [ -z "$matrix" ]; then
+    matrix_input="output/matrix.tsv"
+  else
+    matrix_input="$matrix"
+  fi
+
+  get_conditions.R "$input"
+
+  if (( $(echo "$threshold < 0.4" | bc -l) )) || (( $(echo "$threshold > 0.7" | bc -l) )); then
+      echo "Warning: recommended threshold range is between 0.4 and 0.7. Using $threshold as provided.";
+  fi
+
+  kSelection -i "$matrix_input" -n "$threads" -s "$separator" -t "$threshold"
+
+  comp_qvalue
+
+  rm -f pvalue.tsv output_pv.tsv stats.txt
+
+  mkdir -p output
+  mv qvalue.tsv output/
+  mv matrix_kf.tsv output/
+  rm samples_cond
+
+  echo "kFilter completed!"
+}
+
+kml() {
+    local input=$1
+    local threads=$2
+
+    echo ">>> Running kML..."
+
+    if [[ "$threads" =~ ^[0-9]+$ ]]; then
+        threads=$((threads + 0))
+    else
+        echo "Warning: invalid number of threads ($threads), using default = 4"
+        threads=4
+    fi
+
+    mkdir -p output
+    n_kmers=$(wc -l < output/matrix_kf.tsv)
+    n_kmers=$((n_kmers - 1))
+
+    if [[ $n_kmers -lt 17200001 ]]; then
+      if [[ $n_kmers -lt 10 ]]; then
+          echo "Not enough k-mers to train ML models."
+          echo "$n_kmers k-mers found."
+          exit 1
+      fi
+
+      putting_classes.R "$input"
+      OMP_NUM_THREADS=$threads xgb.py
+      xai.py
+
+    else
+      echo "Too many k-mers to train ML models."
+      echo "$n_kmers k-mers found."
+      echo "Try to increase the threshold in k-filter."
+    fi
+
+    echo "kML completed!"
+}
+
+pipeline() {
+  local input=$1
+  local threads=$2
+  local directory=$3
+  local separator=$4
+  local threshold=$5
+  echo ">>> Running full pipeline..."
+  kcount "$input" "$threads" "$directory"
+  kfilter "$input" "" "$threads" "$separator" "$threshold"
+  kml "$input" "$threads"
+  echo "Pipeline completed!"
+}
+
+# -------- Dispatcher --------
+case "$module" in
+  kcount)
+    kcount "$input" "$threads" "$directory"
+    ;;
+  kfilter)
+    kfilter "$input" "$matrix" "$threads" "$separator" "$threshold"
+    ;;
+  kml)
+    kml "$input" "$threads"
+    ;;
+  pipeline)
+    pipeline "$input" "$threads" "$directory" "$separator" "$threshold"
+    ;;
+  -h|--help|"")
+    show_help
+    ;;
+  *)
+    echo "Error: Unknown module '$module'"
+    show_help
+    ;;
+esac
