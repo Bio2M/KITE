@@ -18,7 +18,7 @@ apptainer pull --arch amd64 library://devbio2m/kite/kite:latest
 prerequisite : apptainer (or singularity)
 
 ```
-git clone https://github.com.Bio2M/KITE
+git clone https://github.com/Bio2M/KITE
 cd KITE
 apptainer build kite.sif kite.def
 ```
@@ -45,7 +45,7 @@ export PATH=${PWD}/src:$PATH
 **input files are in the working directory or HOME directory**
 
 ```
-export PATH=/path/to/kite.sif/ 
+export PATH=/path/to/kite-directory:$PATH
 
 kite.sif kcount -i metadata.csv -n 12 -d path/to/fastq
 kite.sif kfilter -i metadata.csv -n 4 -s t -t 0.5
