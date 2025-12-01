@@ -1,11 +1,12 @@
 name: kite
+
 channels:
   - conda-forge
   - tlemane
   - defaults
+
 dependencies:
   # Python
-  - python
   - pandas
   - scikit-learn
   - xgboost

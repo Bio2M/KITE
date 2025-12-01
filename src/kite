@@ -134,7 +134,7 @@ kml() {
     n_kmers=$(wc -l < output/matrix_kf.tsv)
     n_kmers=$((n_kmers - 1))
 
-    if [[ $n_kmers -lt 17200001 ]]; then
+    if [[ $n_kmers -lt 1000000 ]]; then
       if [[ $n_kmers -lt 10 ]]; then
           echo "Not enough k-mers to train ML models."
           echo "$n_kmers k-mers found."
