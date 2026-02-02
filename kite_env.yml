@@ -6,7 +6,7 @@ channels:
   - defaults
 
 dependencies:
-  # Python
+  - Python=3.11
   - pandas
   - scikit-learn
   - xgboost
@@ -14,7 +14,7 @@ dependencies:
   - shap
 
   # R
-  - r-base
+  - r-base=4.3
 
   # C++ compilers
   - gxx_linux-64
@@ -22,4 +22,3 @@ dependencies:
 
   # kmtricks
   - kmtricks
-

@@ -1,16 +1,19 @@
 # KITE
-[![Kmtricks](https://img.shields.io/badge/Kmtricks-documentation-blue)](https://github.com/tseemann/kmtricks)
+[![Kmtricks](https://img.shields.io/badge/Kmtricks-documentation-blue)](https://github.com/tlemane/kmtricks)
 
 
 ## Description
 
-KITE (K-mer Integration for Transcriptomic Exploration) is a bioinformatics pipeline for differential k-mer analysis from RNA-seq data. It provides modules for k-mer counting, filtering, machine learning methods, and a full end-to-end workflow.
+KITE (K-mer Integration for Transcriptomic Exploration) is a bioinformatics pipeline for 
+differential k-mer analysis from RNA-seq data. It provides modules for k-mer counting, 
+filtering, machine learning methods, and a full end-to-end workflow.
 
 ## Installation
 
-There are three ways to use KITE: download an apptainer/singularity container, create a container, or install the software via Miniconda.
+There are three ways to install KITE: download a pre-built apptainer/singularity container, 
+create a container from a definition file, or install the software via Miniconda.
 
-### 1. Download apptainer container
+### Method 1: Download apptainer container
 
 Prerequisite: apptainer/singularity
 
@@ -18,7 +21,7 @@ Prerequisite: apptainer/singularity
 apptainer pull --arch amd64 library://devbio2m/kite/kite:latest
 ```
 
-### 2. Create container
+### Method 2: Create container
 
 Prerequisite: apptainer/singularity
 
@@ -28,7 +31,7 @@ cd KITE
 apptainer build kite.sif kite.def
 ```
 
-### 3. Miniconda
+### Method 3: Miniconda
 
 Prerequisites: 
 
