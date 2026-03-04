@@ -19,6 +19,7 @@ Prerequisite: apptainer/singularity
 
 ```
 apptainer pull --arch amd64 library://devbio2m/kite/kite:latest
+mv kite_latest.sif kite.sif
 ```
 
 ### Method 2: Create container
@@ -66,14 +67,15 @@ export PATH=${PWD}/src:$PATH
 
 ### Options
 
-| Option         | Description                                                     |
-| -------------- | --------------------------------------------------------------- |
-| `-i`           | Input file (sample metadata or k-mer matrix).                   |
-| `-p`           | Selection threshold for k-mer filtering (0.4–0.7, default=0.5). |
-| `-t`           | Number of threads (default=4).                                  |
-| `-d`           | Directory containing fastq samples.                             |
-| `-s`           | Separator for k-mer matrix (default: space).                    |
-| `-h`, `--help` | Show help message.                                              |
+| Option         | Description                                                          |
+| -------------- | ------------------------------------------------------------------   |
+| `-i`           | Sample metadata.                                                     |
+| `-p`           | Selection threshold for k-mer filtering [0.4–0.7] (default=0.5).     |
+| `-t`           | Number of threads (default=4).                                       |
+| `-d`           | Directory containing fastq samples.                                  |
+| `-m`           | Directory for k-mer matrix (default: output/output.tsv)              |
+| `-s`           | Separator for k-mer matrix [s=space, t=tab, c=comma] (default: s).   |
+| `-h`, `--help` | Show help message.                                                   |
 
 
 ## Usage
@@ -98,7 +100,7 @@ apptainer run --bind /path/to/files  path/to/kite.sif kfilter -i metadata.csv -n
 apptainer run --bind /path/to/files  path/to/kite.sif kml -i metadata.csv -n 4
 ```
 
-### with miniconda
+### With miniconda
 
 ```
 conda activate kite 
@@ -107,6 +109,12 @@ kite kcount -i metadata.csv -n 12 -d path/to/fastq
 kite kfilter -i metadata.csv -n 4 -s t -t 0.5
 kite kml -i metadata.csv -n 4
 ```
+
+## Input
+* `[metadata.csv]` – file with sample metadata (-i option)
+* `[path/to/fastq]` – directory for metadata (-d option)
+* `[matrix.tsv]` – k-mer count matrix (-m option, for kfilter module)
+
 
 ## Output
 
@@ -125,3 +133,4 @@ All output files are stored in the `output/` directory:
 * The recommended threshold for `kfilter` is between 0.4 and 0.7, although users may choose more stringent (0.9) or more relaxed (0.1) thresholds.
 * `kml` will not run if the number of k-mers is too low (<10) or too high (>1,000,000). Adjust threshold accordingly.
 * Ensure your input file and fastq directory are correctly formatted.
+* The `-m` option is exclusively for cases where kfilter is executed with an externally generated matrix. It should not be used during standard pipeline execution.
