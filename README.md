@@ -130,7 +130,7 @@ All output files are stored in the `output/` directory:
 
 ## Notes
 
-* The recommended threshold for `kfilter` is between 0.4 and 0.7, although users may choose more stringent (0.9) or more relaxed (0.1) thresholds.
+* The recommended threshold for `kfilter` ranges from 0.1 to 0.9, with higher values applying more stringent filtering and lower values allowing more permissive filtering.
 * `kml` will not run if the number of k-mers is too low (<10) or too high (>1,000,000). Adjust threshold accordingly.
 * Ensure your input file and fastq directory are correctly formatted.
 * The `-m` option is exclusively for cases where kfilter is executed with an externally generated matrix. It should not be used during standard pipeline execution.
